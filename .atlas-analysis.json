@@ -1,0 +1,95 @@
+{
+  "projectType": "saas",
+  "projectName": "Personal Finance Web",
+  "projectDescription": "A React-based personal finance dashboard for tracking income, expenses, and categories with interactive charts and dark mode support.",
+  "theme": "almond",
+  "primaryColor": "#6366f1",
+  "lightColor": "#eef2ff",
+  "darkColor": "#3730a3",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started/quickstart", "getting-started/configuration"]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/dashboard",
+              "features/transactions",
+              "features/categories",
+              "features/settings"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/api-integration",
+              "architecture/state-management"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/transactions/get-transactions",
+              "api-reference/transactions/create-transaction",
+              "api-reference/transactions/update-transaction",
+              "api-reference/transactions/delete-transaction"
+            ]
+          },
+          {
+            "group": "Categories",
+            "pages": [
+              "api-reference/categories/get-categories",
+              "api-reference/categories/create-category",
+              "api-reference/categories/update-category",
+              "api-reference/categories/delete-category"
+            ]
+          },
+          {
+            "group": "Statistics",
+            "pages": [
+              "api-reference/stats/monthly-balance",
+              "api-reference/stats/top-categories",
+              "api-reference/stats/by-category"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Financial dashboard with income, expense, and balance summary cards",
+    "Interactive charts (bar, pie, donut) powered by Apache ECharts",
+    "Transaction management with full CRUD operations",
+    "Category management for organizing transactions",
+    "Advanced filtering by year, month, category, and type",
+    "Dark mode support with persistent user preference",
+    "User profile with customizable avatar and username",
+    "Responsive design with mobile and tablet support",
+    "Brazilian Real (BRL) currency formatting"
+  ],
+  "publicApiSurface": [
+    "GET /api/transactions",
+    "POST /api/transactions",
+    "PATCH /api/transactions/:id",
+    "DELETE /api/transactions/:id",
+    "GET /api/transactions/years",
+    "GET /api/categories",
+    "POST /api/categories",
+    "PUT /api/categories/:id",
+    "DELETE /api/categories/:id",
+    "GET /api/stats/monthly",
+    "GET /api/stats/top-categories",
+    "GET /api/stats/by-category"
+  ]
+}
