@@ -1,0 +1,272 @@
+---
+title: "State management"
+description: "React Context providers and custom hooks"
+---
+
+The application manages state exclusively through React Context and custom hooks — there is no external state library. Three context providers cover distinct concerns: user session/settings, dashboard data, and transaction list data.
+
+## Provider tree
+
+```
+BrowserRouter
+└── SettingsContextProvider        ← whole app
+    └── App
+        ├── /login           (public)
+        └── ProtectedRoute
+            ├── /
+            │   └── DashboardContextProvider
+            │       └── Dashboard
+            ├── /transactions
+            │   └── TransactionsContextProvider
+            │       └── Transactions
+            ├── /categories    (no dedicated provider)
+            └── /settings      (no dedicated provider)
+```
+
+<Note>
+  `DashboardContextProvider` and `TransactionsContextProvider` are scoped to their respective routes. Data fetching for each section only begins when the user navigates there.
+</Note>
+
+## Context providers
+
+### SettingsContext
+
+`src/context/SettingsContext.tsx` is the outermost provider. It owns:
+
+- **User session** — stored as `UserSession | null`. Persisted to and read from `localStorage` under the key `'user-login-finances'`.
+- **Dark mode** — `isDark` string (`'light'` or `'dark'`), persisted to `localStorage` under `'theme'`. Falls back to `prefers-color-scheme` on first visit.
+- **Avatar / username** — editable display name and DiceBear avatar URL.
+- **`login` / `logout`** — `saveUser` sets the user and navigates to `/`; `logout` sets user to `null`.
+
+```typescript src/context/SettingsContext.tsx
+export type UserSession = {
+  userName: string,
+  userAvatar: string
+}
+```
+
+```typescript src/context/SettingsContext.tsx
+const [user, setUser] = useState<UserSession | null>(() => {
+  try {
+    const saved = localStorage.getItem("user-login-finances")
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+})
+```
+
+Whenever `user` changes the effect below keeps `localStorage` in sync:
+
+```typescript src/context/SettingsContext.tsx
+useEffect(() => {
+  if (user) {
+    localStorage.setItem('user-login-finances', JSON.stringify(user))
+  } else {
+    localStorage.removeItem('user-login-finances')
+  }
+}, [user])
+```
+
+| Value | Type | Description |
+|---|---|---|
+| `user` | `UserSession \| null` | Current session; `null` means logged out |
+| `isDark` | `string` | `'light'` or `'dark'` |
+| `userName` | `string` | Editable display name (form state) |
+| `userAvatar` | `string` | Selected avatar URL |
+| `avatarsURL` | `string[]` | List of 10 preset DiceBear avatar URLs |
+| `saveUser` | `(e) => void` | Commits the login form |
+| `logout` | `() => void` | Clears the session |
+| `updateUserAvatar` | `(avatar) => void` | Updates avatar in both state and `user` object |
+| `updateUserName` | `(name) => void` | Updates name in the `user` object |
+
+### DashboardContext
+
+`src/context/DashboardContext.tsx` is mounted only for the `/` route. It fetches all four data sources in **parallel** using `Promise.all` every time the active filters change:
+
+```typescript src/context/DashboardContext.tsx
+async function fetchDashboardData() {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const [top, all, balance, transactions] = await Promise.all([
+      getTopCategories(filters),
+      getAllCategories(filters),
+      getBalance(filters),
+      getTransactions(filters)
+    ]);
+
+    if (!cancelled) {
+      setTopCategories(top);
+      setAllCategories(all);
+      setBalanceData(balance);
+      setTransactions(incomeAndExpenses(transactions))
+    }
+  } catch (err) {
+    if (!cancelled) {
+      setError(err instanceof Error ? err.message : "Error loading dashboard data");
+    }
+  } finally {
+    if (!cancelled) {
+      setLoading(false);
+    }
+  }
+}
+```
+
+A `cancelled` flag guards against state updates on unmounted components — it is set to `true` in the `useEffect` cleanup function.
+
+Filters default to the current calendar month and year:
+
+```typescript src/context/DashboardContext.tsx
+export const INITIAL_FILTERS: Filters = {
+  month: currentMonth.toString(),
+  year: currentYear.toString()
+}
+```
+
+| Value | Type | Description |
+|---|---|---|
+| `filters` | `Filters` | Active month/year filter |
+| `updateFilter` | `(key, value) => void` | Updates a single filter key |
+| `balanceData` | `Balance` | Income, expense, balance + period change |
+| `topCategories` | `DataOptions[]` | Top 5 categories for pie chart |
+| `allCategories` | `DataOptions[]` | All categories for bar chart |
+| `transactions` | `DataOptions[]` | Daily/monthly income vs expense for line chart |
+| `loading` | `boolean` | True while any fetch is in flight |
+| `error` | `string \| null` | Error message from the last failed fetch |
+| `isMobile` / `isTablet` | `boolean` | Viewport breakpoint flags |
+| `chartHeight` | `number` | Responsive chart height (300/350/400 px) |
+
+### TransactionsContext
+
+`src/context/TransactionsContext.tsx` is mounted only for the `/transactions` route. Rather than owning its own state it composes three custom hooks and re-exports their combined API:
+
+```typescript src/context/TransactionsContext.tsx
+export function TransactionsContextProvider({ children }: { children: React.ReactNode }) {
+  const { transactions, loading, error, filters, updateFilter,
+          resetFilters, categories, loadData } = useTransactionsFetch()
+  const { pagedResults, totalPages, currentPage } = usePagination(transactions)
+  const { isModalEditOpen, setIsModalEditOpen, isModalDeleteOpen,
+          setIsModalDeleteOpen, formData, setFormData } = useTransactionForm()
+
+  return (
+    <TransactionsContext.Provider value={{
+      transactions, error, loading,
+      filters, updateFilter, resetFilters,
+      loadData, categories, currentPage,
+      totalPages, pagedResults, formData,
+      setFormData,
+      isModalDeleteOpen, setIsModalDeleteOpen,
+      isModalEditOpen, setIsModalEditOpen
+    }}>
+      {children}
+    </TransactionsContext.Provider>
+  )
+}
+```
+
+| Value | Type | Description |
+|---|---|---|
+| `transactions` | `Transaction[]` | Full filtered list (before pagination) |
+| `pagedResults` | `Transaction[]` | Current page slice (5 items per page) |
+| `currentPage` / `totalPages` | `number` | Pagination state |
+| `filters` | `Filters` | Active filter values (synced to URL) |
+| `updateFilter` | `(key, value) => void` | Sets one filter in the URL search params |
+| `resetFilters` | `() => void` | Removes all filter params from URL |
+| `categories` | `Category[] \| null` | All categories for the filter dropdown |
+| `loadData` | `() => Promise<void>` | Manually re-triggers the fetch |
+| `formData` | `Transaction` | Form state for the edit/create modal |
+| `isModalEditOpen` | `boolean` | Controls edit modal visibility |
+| `isModalDeleteOpen` | `boolean` | Controls delete confirmation visibility |
+
+## Custom hooks
+
+### useTransactionsFetch
+
+`src/hooks/useTransactionsFetch.tsx` handles data fetching for the transactions page. Filters are derived from — and written back to — the browser URL via React Router's `useSearchParams`, so filter state survives page refresh and is shareable as a URL.
+
+```typescript src/hooks/useTransactionsFetch.tsx
+const filters = useMemo<Filters>(() => ({
+  type:     searchParams.get('type')     || '',
+  category: searchParams.get('category') || '',
+  year:     searchParams.get('year')     || '',
+  month:    searchParams.get('month')    || '',
+}), [searchParams])
+```
+
+Updating a filter sets the corresponding URL search parameter; clearing it deletes the parameter:
+
+```typescript src/hooks/useTransactionsFetch.tsx
+const updateFilter = (key: string, value: string) => {
+  const params = new URLSearchParams(searchParams)
+
+  if (value) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
+
+  setSearchParams(params);
+}
+```
+
+Categories are fetched once on mount (no dependency on `filters`) in a separate `useEffect`.
+
+### useTransactionsForm
+
+`src/hooks/useTransactionsForm.tsx` encapsulates modal visibility and form state for transaction create/edit/delete operations. It holds no network logic — the actual API calls live in the page component.
+
+```typescript src/hooks/useTransactionsForm.tsx
+const INITIAL_TRANSACTION: Transaction = {
+  id: "",
+  description: '',
+  amount: 0,
+  type: 'expense',
+  category: '',
+  date: ''
+}
+
+export default function useTransactionForm() {
+  const [isModalEditOpen, setIsModalEditOpen] = useState(false);
+  const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
+  const [formData, setFormData] = useState<Transaction>(INITIAL_TRANSACTION);
+
+  return {
+    isModalEditOpen, setIsModalEditOpen, isModalDeleteOpen,
+    setIsModalDeleteOpen, formData, setFormData
+  }
+}
+```
+
+### usePagination
+
+`src/hooks/usePagination.tsx` slices a `Transaction[]` array into pages. The current page is also read from the URL (`?page=N`) so that refreshing the browser keeps the user on the same page.
+
+```typescript src/hooks/usePagination.tsx
+export const RESULT_PER_PAGE = 5
+
+export default function usePagination(transactions: Transaction[]) {
+  const [searchParams] = useSearchParams()
+  const currentPage = Number(searchParams.get('page') ?? '1')
+
+  const totalPages = useMemo(
+    () => Math.ceil(transactions.length / RESULT_PER_PAGE),
+    [transactions]
+  )
+  const pagedResults = useMemo(
+    () => transactions.slice(
+      (currentPage - 1) * RESULT_PER_PAGE,
+      currentPage * RESULT_PER_PAGE
+    ),
+    [transactions, currentPage]
+  )
+
+  return { totalPages, pagedResults, currentPage }
+}
+```
+
+<Tip>
+  Because both filters and the current page number live in the URL, users can bookmark or share a filtered, paginated view of their transactions.
+</Tip>

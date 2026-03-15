@@ -1,0 +1,75 @@
+---
+title: 'Spending by category'
+description: 'Retrieve expense totals for all categories in a given month, used to render the donut chart.'
+---
+
+Returns expense totals grouped by category for the specified period. Unlike the [top categories](/api-reference/stats/top-categories) endpoint, this returns every category that has transactions — not just the top 5. The dashboard uses this data to render the donut (pie) chart.
+
+## Endpoint
+
+```
+GET /api/stats/by-category
+```
+
+## Query parameters
+
+<ParamField query="year" type="string" required>
+  Four-digit year to filter by (e.g. `"2024"`).
+</ParamField>
+
+<ParamField query="month" type="string" required>
+  Month number to filter by, without leading zero (e.g. `"3"` for March).
+</ParamField>
+
+## Response
+
+An array of objects, one per category that has expense transactions in the period. The array is not ordered by value.
+
+<ResponseField name="name" type="string" required>
+  Category name (e.g. `"Food"`, `"Transport"`).
+</ResponseField>
+
+<ResponseField name="value" type="number" required>
+  Total amount spent in this category for the period.
+</ResponseField>
+
+<Note>
+  Categories with zero transactions in the selected period are not included in the response.
+</Note>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://your-api-url/api/stats/by-category \
+  --data-urlencode "year=2024" \
+  --data-urlencode "month=3"
+```
+
+```typescript TypeScript
+import { getAllCategories } from './api/transactions';
+
+// From DashboardContext.tsx — called with the active filters
+const allCategories = await getAllCategories({ year: '2024', month: '3' });
+
+allCategories.forEach(({ name, value }) => {
+  console.log(`${name}: ${value}`);
+});
+```
+
+</CodeGroup>
+
+### Response example
+
+```json 200
+[
+  { "name": "Food", "value": 820 },
+  { "name": "Housing", "value": 1200 },
+  { "name": "Transport", "value": 340 },
+  { "name": "Health", "value": 290 },
+  { "name": "Entertainment", "value": 150 },
+  { "name": "Education", "value": 200 },
+  { "name": "Subscriptions", "value": 95 }
+]
+```

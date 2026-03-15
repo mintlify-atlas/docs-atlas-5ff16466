@@ -1,0 +1,141 @@
+---
+title: 'Monthly balance'
+description: 'Retrieve income, expense, and balance totals for the current and previous month, along with percentage changes.'
+---
+
+Returns aggregated financial totals for a given month and year. The response includes amounts for the current period, the previous period, and the percentage change between them. This data powers the summary cards on the dashboard.
+
+<Info>
+  Income is always a positive number. Expense is the total amount spent, also expressed as a positive number. Balance is calculated as `income - expense`.
+</Info>
+
+## Endpoint
+
+```
+GET /api/stats/monthly
+```
+
+## Query parameters
+
+<ParamField query="year" type="string" required>
+  Four-digit year to filter by (e.g. `"2024"`).
+</ParamField>
+
+<ParamField query="month" type="string" required>
+  Month number to filter by, without leading zero (e.g. `"3"` for March).
+</ParamField>
+
+<ParamField query="type" type="string">
+  Filter by transaction type. Accepted values: `"income"`, `"expense"`.
+</ParamField>
+
+<ParamField query="category" type="string">
+  Filter by category name (e.g. `"Food"`).
+</ParamField>
+
+## Response
+
+<ResponseField name="transactionsAmount" type="object" required>
+  Totals split by current and previous period.
+
+  <Expandable title="properties">
+    <ResponseField name="current" type="object" required>
+      Totals for the requested month.
+
+      <Expandable title="properties">
+        <ResponseField name="income" type="number | null">
+          Total income for the current month. `null` when no transactions exist.
+        </ResponseField>
+        <ResponseField name="expense" type="number | null">
+          Total amount spent in the current month. `null` when no transactions exist.
+        </ResponseField>
+        <ResponseField name="balance" type="number | null">
+          Net balance (`income - expense`) for the current month. `null` when no transactions exist.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="previous" type="object" required>
+      Totals for the month immediately before the requested period.
+
+      <Expandable title="properties">
+        <ResponseField name="income" type="number | null">
+          Total income for the previous month. `null` when no transactions exist.
+        </ResponseField>
+        <ResponseField name="expense" type="number | null">
+          Total amount spent in the previous month. `null` when no transactions exist.
+        </ResponseField>
+        <ResponseField name="balance" type="number | null">
+          Net balance for the previous month. `null` when no transactions exist.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="change" type="object" required>
+  Percentage change between the current and previous period.
+
+  <Expandable title="properties">
+    <ResponseField name="income" type="number | null">
+      Percentage change in income vs the previous month. `null` when the previous month has no data.
+    </ResponseField>
+    <ResponseField name="expense" type="number | null">
+      Percentage change in expenses vs the previous month. `null` when the previous month has no data.
+    </ResponseField>
+    <ResponseField name="balance" type="number | null">
+      Percentage change in balance vs the previous month. `null` when the previous month has no data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  The `change` values are whole-number percentages. The dashboard renders them as `▲ {change}% compared to previous month` when positive and `▼ {|change|}% compared to previous month` when negative.
+</Note>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://your-api-url/api/stats/monthly \
+  --data-urlencode "year=2024" \
+  --data-urlencode "month=3"
+```
+
+```typescript TypeScript
+import { getBalance } from './api/transactions';
+
+// From DashboardContext.tsx — called with the active filters
+const balance = await getBalance({ year: '2024', month: '3' });
+
+console.log(balance.transactionsAmount.current.income);  // e.g. 5000
+console.log(balance.transactionsAmount.current.expense); // e.g. 3200
+console.log(balance.change.income);                      // e.g. 12
+```
+
+</CodeGroup>
+
+### Response example
+
+```json 200
+{
+  "transactionsAmount": {
+    "current": {
+      "income": 5000,
+      "expense": 3200,
+      "balance": 1800
+    },
+    "previous": {
+      "income": 4464,
+      "expense": 3000,
+      "balance": 1464
+    }
+  },
+  "change": {
+    "income": 12,
+    "expense": 7,
+    "balance": 23
+  }
+}
+```

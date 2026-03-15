@@ -1,0 +1,146 @@
+---
+title: 'Update transaction'
+description: 'Partially update an existing transaction by its ID.'
+---
+
+## PATCH /api/transactions/:id
+
+Updates one or more fields of an existing transaction. Only the fields included in the request body are changed. Returns the full updated transaction object.
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the transaction to update.
+</ParamField>
+
+## Request body
+
+Provide any subset of the transaction fields you want to update.
+
+<ParamField body="type" type="string">
+  Transaction type. Must be `income` or `expense`.
+</ParamField>
+
+<ParamField body="category" type="string">
+  Category label for the transaction.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Human-readable description of the transaction.
+</ParamField>
+
+<ParamField body="date" type="string">
+  Date of the transaction in `YYYY-MM-DD` format.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Transaction amount as a positive number.
+</ParamField>
+
+## Response
+
+Returns the full updated `Transaction` object.
+
+<ResponseField name="id" type="string">
+  Unique identifier of the transaction.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  Transaction type: `income` or `expense`.
+</ResponseField>
+
+<ResponseField name="category" type="string" required>
+  Category label for the transaction.
+</ResponseField>
+
+<ResponseField name="description" type="string" required>
+  Human-readable description of the transaction.
+</ResponseField>
+
+<ResponseField name="date" type="string" required>
+  Date of the transaction in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Transaction amount.
+</ResponseField>
+
+## Code examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH https://api.example.com/api/transactions/txn_abc123 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 95.00,
+    "description": "Grocery shopping (updated)"
+  }'
+```
+
+```typescript TypeScript
+export async function updateTransaction(
+  item: Transaction,
+): Promise<Transaction> {
+  const response = await fetch(`${API_URL}/api/transactions/${item.id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(item),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error editing transaction (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+
+// Usage
+const updated = await updateTransaction({
+  id: 'txn_abc123',
+  type: 'expense',
+  category: 'Food',
+  description: 'Grocery shopping (updated)',
+  date: '2024-03-15',
+  amount: 95.00,
+});
+```
+
+</CodeGroup>
+
+<RequestExample>
+
+```json Request body
+{
+  "amount": 95.00,
+  "description": "Grocery shopping (updated)"
+}
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "txn_abc123",
+  "type": "expense",
+  "category": "Food",
+  "description": "Grocery shopping (updated)",
+  "date": "2024-03-15",
+  "amount": 95.00
+}
+```
+
+```json 404
+{
+  "message": "Transaction not found."
+}
+```
+
+</ResponseExample>

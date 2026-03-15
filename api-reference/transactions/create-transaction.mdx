@@ -1,0 +1,155 @@
+---
+title: 'Create transaction'
+description: 'Create a new income or expense transaction.'
+---
+
+## POST /api/transactions
+
+Creates a new transaction and returns the saved object, including the server-assigned `id`.
+
+## Request body
+
+<ParamField body="type" type="string" required>
+  Transaction type. Must be `income` or `expense`.
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  Category label for the transaction.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Human-readable description of the transaction.
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Date of the transaction in `YYYY-MM-DD` format.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Transaction amount as a positive number.
+</ParamField>
+
+## Response
+
+Returns the created `Transaction` object with the server-assigned `id`.
+
+<ResponseField name="id" type="string">
+  Unique identifier assigned by the server.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  Transaction type: `income` or `expense`.
+</ResponseField>
+
+<ResponseField name="category" type="string" required>
+  Category label for the transaction.
+</ResponseField>
+
+<ResponseField name="description" type="string" required>
+  Human-readable description of the transaction.
+</ResponseField>
+
+<ResponseField name="date" type="string" required>
+  Date of the transaction in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Transaction amount.
+</ResponseField>
+
+## Error response
+
+When the request fails, the server returns an error object.
+
+<ResponseField name="message" type="string">
+  A description of what went wrong.
+</ResponseField>
+
+<Warning>
+  If the server returns a non-OK status and the response body does not contain a `message` field, the client falls back to a generic error string including the HTTP status code.
+</Warning>
+
+## Code examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.example.com/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "expense",
+    "category": "Food",
+    "description": "Grocery shopping",
+    "date": "2024-03-15",
+    "amount": 87.50
+  }'
+```
+
+```typescript TypeScript
+export async function createTransaction(
+  newItem: Transaction,
+): Promise<Transaction> {
+  const response = await fetch(`${API_URL}/api/transactions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(newItem),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error adding transaction (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+
+// Usage
+const transaction = await createTransaction({
+  type: 'expense',
+  category: 'Food',
+  description: 'Grocery shopping',
+  date: '2024-03-15',
+  amount: 87.50,
+});
+```
+
+</CodeGroup>
+
+<RequestExample>
+
+```json Request body
+{
+  "type": "expense",
+  "category": "Food",
+  "description": "Grocery shopping",
+  "date": "2024-03-15",
+  "amount": 87.50
+}
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{
+  "id": "txn_abc123",
+  "type": "expense",
+  "category": "Food",
+  "description": "Grocery shopping",
+  "date": "2024-03-15",
+  "amount": 87.50
+}
+```
+
+```json 400
+{
+  "message": "Field 'amount' is required."
+}
+```
+
+</ResponseExample>

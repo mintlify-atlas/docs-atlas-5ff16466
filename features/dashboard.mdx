@@ -1,0 +1,116 @@
+---
+title: 'Dashboard'
+description: 'Financial overview with income, expense, and balance summary for the selected period.'
+keywords: ['dashboard', 'balance', 'income', 'expenses', 'charts', 'overview']
+---
+
+The Dashboard is your main financial overview. It aggregates all recorded transactions for the selected period and presents the data through summary cards and interactive charts.
+
+## Balance cards
+
+Three summary cards appear at the top of the dashboard.
+
+<CardGroup cols={3}>
+  <Card title="Total incomes" icon="arrow-up">
+    Sum of all income transactions for the selected period. Displayed on a green (`bg-success`) background.
+  </Card>
+  <Card title="Total expenses" icon="arrow-down">
+    Sum of all expense transactions for the selected period. Displayed on a red (`bg-danger`) background.
+  </Card>
+  <Card title="Balance" icon="scale">
+    Net balance (income minus expenses). Shown in green when positive, red when negative.
+  </Card>
+</CardGroup>
+
+Each card shows a month-over-month percentage change indicator when data from the previous month is available:
+
+- **▲ X%** — value increased compared to the previous month
+- **▼ X%** — value decreased compared to the previous month
+
+The indicator is hidden when the change is `null` or `0`.
+
+<Note>
+  All monetary values are formatted in Brazilian Real (BRL) using `Intl.NumberFormat`.
+
+  ```typescript
+  export const formatCurrency = (value: number | null) => {
+      if (value === null) return 'R$ 0,00'
+      return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+      }).format(value)
+  }
+  ```
+</Note>
+
+## Charts
+
+When transactions exist for the selected period, three charts are rendered below the balance cards.
+
+<CardGroup cols={2}>
+  <Card title="Income & expenses over time" icon="chart-bar">
+    A bar chart showing net income and expense values grouped by day (when a month is selected) or by month (when viewing a full year). Spans the full width of the page.
+  </Card>
+  <Card title="Top 5 categories" icon="list">
+    A chart highlighting the five categories with the highest expense totals for the period. Rendered in a two-column grid alongside the donut chart.
+  </Card>
+  <Card title="All categories" icon="chart-pie">
+    A donut chart showing the expense breakdown across all categories for the period. Rendered beside the top 5 categories chart.
+  </Card>
+</CardGroup>
+
+<Info>
+  The top 5 categories chart and the all-categories donut chart are only shown when at least one expense is recorded. If the period contains income transactions but no expenses, a message is displayed in place of those two charts: "No expenses recorded — Your transactions this period were all income."
+</Info>
+
+### Dark mode adaptive charts
+
+All charts use Apache ECharts via `echarts-for-react`. Chart colors and labels adapt automatically to the active theme. A `MutationObserver` monitors the `class` attribute on `document.documentElement` and re-renders charts whenever the `dark` class is added or removed:
+
+```typescript
+const observer = new MutationObserver(checkDarkMode)
+observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+})
+```
+
+Chart height scales with viewport size:
+
+| Viewport | Height |
+| -------- | ------ |
+| Mobile (`< 640px`) | 300px |
+| Tablet (`640px–1023px`) | 350px |
+| Desktop (`>= 1024px`) | 400px |
+
+## Filters
+
+Two dropdowns in the top-right of the page control which period is displayed.
+
+| Filter | Options | Default |
+| ------ | ------- | ------- |
+| Month | January – December, or "All months" | Current month |
+| Year | All years with recorded transactions, or "All years" | Current year |
+
+Filters are initialized from `INITIAL_FILTERS` in `DashboardContext`:
+
+```typescript
+const date = new Date();
+const currentMonth = date.getMonth() + 1;
+const currentYear = date.getFullYear();
+
+export const INITIAL_FILTERS: Filters = {
+    month: currentMonth.toString(),
+    year: currentYear.toString()
+}
+```
+
+Changing either filter immediately re-fetches all dashboard data.
+
+## Empty state
+
+When no transactions are recorded for the selected period, the charts section is replaced by an empty state message:
+
+> **No Data Available** — There are no recorded movements during this period. Try selecting a different month or year to view your financial data.
+
+A **View Current Month** button resets the filters back to `INITIAL_FILTERS` (current month and year).

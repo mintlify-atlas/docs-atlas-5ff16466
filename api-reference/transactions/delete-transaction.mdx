@@ -1,0 +1,77 @@
+---
+title: 'Delete transaction'
+description: 'Permanently delete a transaction by its ID.'
+---
+
+## DELETE /api/transactions/:id
+
+Permanently deletes the specified transaction. Returns no body on success.
+
+<Warning>
+  This action is irreversible. Once a transaction is deleted it cannot be recovered.
+</Warning>
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the transaction to delete.
+</ParamField>
+
+## Response
+
+**204 No Content** — The transaction was deleted successfully. The response body is empty.
+
+## Error handling
+
+If the request fails, the client reads a `message` field from the JSON response body. If no `message` is present it falls back to a generic string that includes the HTTP status code.
+
+<ResponseField name="message" type="string">
+  Present only on error. A description of what went wrong.
+</ResponseField>
+
+## Code examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X DELETE https://api.example.com/api/transactions/txn_abc123
+```
+
+```typescript TypeScript
+export async function deleteTransaction(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/transactions/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error delete transition (${response.status})`,
+    );
+  }
+}
+
+// Usage
+try {
+  await deleteTransaction('txn_abc123');
+  console.log('Transaction deleted.');
+} catch (err) {
+  console.error(err.message);
+}
+```
+
+</CodeGroup>
+
+<ResponseExample>
+
+```json 204
+// No content
+```
+
+```json 404
+{
+  "message": "Transaction not found."
+}
+```
+
+</ResponseExample>

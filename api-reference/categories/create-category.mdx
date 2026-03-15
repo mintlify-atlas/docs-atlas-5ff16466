@@ -1,0 +1,58 @@
+---
+title: 'Create category'
+description: 'Create a new category to organize your transactions.'
+---
+
+Creates a new category. The server assigns a unique `id` to the created category, which is returned in the response.
+
+## Endpoint
+
+```
+POST /api/categories
+```
+
+## Request body
+
+<ParamField body="name" type="string" required>
+  Display name for the new category.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string" required>
+  Unique identifier assigned by the server.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Display name of the created category.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url "${VITE_API_URL}/api/categories" \
+  --header "Content-Type: application/json" \
+  --data '{ "name": "Utilities" }'
+```
+
+```typescript TypeScript
+import { createCategory } from './src/api/transactions';
+
+const newCategory = await createCategory({ name: 'Utilities' });
+console.log(newCategory);
+// { id: "3", name: "Utilities" }
+```
+
+</CodeGroup>
+
+## Response example
+
+```json 201
+{
+  "id": "3",
+  "name": "Utilities"
+}
+```

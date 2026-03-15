@@ -1,0 +1,100 @@
+---
+title: 'Settings'
+description: 'Customizing your profile and application preferences.'
+keywords: ['settings', 'profile', 'avatar', 'dark mode', 'delete account', 'theme']
+---
+
+The Settings page is organized into two sections: **Account Settings** for profile preferences, and **Danger Zone** for destructive account actions.
+
+## First-time setup
+
+When no saved session is found in `localStorage`, the app shows a login/create account page instead of the main interface. This is the only place where you establish your identity before using the app.
+
+<Steps>
+  <Step title="Enter a username">
+    Type a display name in the username field. The field is required and cannot be blank.
+  </Step>
+  <Step title="Choose an avatar">
+    Select one of the pre-built DiceBear avatars from the picker grid.
+  </Step>
+  <Step title="Submit">
+    Click the submit button. Your session is saved to `localStorage` under the key `user-login-finances` and you are redirected to the Dashboard.
+  </Step>
+</Steps>
+
+<Note>
+  Session data is stored as a JSON object with `userName` and `userAvatar` fields:
+
+  ```typescript
+  export type UserSession = {
+      userName: string,
+      userAvatar: string
+  }
+  ```
+
+  On every subsequent visit, this value is read from `localStorage` to restore your session automatically.
+</Note>
+
+## Account settings
+
+### Change name
+
+Click **Change name** to open a modal with a **Username** text input pre-filled with your current name. Edit the value and click **Save name** to apply the change. The display name updates immediately across the app.
+
+### Change photo
+
+Click **Change photo** to open the avatar picker modal. Ten DiceBear avatars are available, all using the `dylan` style from `api.dicebear.com/9.x/dylan/svg`. Click any avatar to select it immediately — the modal closes and your profile image updates at once.
+
+The ten available avatars use the following seeds and styles:
+
+```text
+https://api.dicebear.com/9.x/dylan/svg?seed=Andrea&backgroundColor=29e051&hair=plain&mood=superHappy&skinColor=c26450
+https://api.dicebear.com/9.x/dylan/svg?seed=Brooklynn&mood=confused,happy,hopeful,neutral,superHappy
+https://api.dicebear.com/9.x/dylan/svg?seed=Alexander&backgroundColor=619eff&mood=happy
+https://api.dicebear.com/9.x/dylan/svg?seed=Aidan&backgroundColor=ffa6e6&mood=happy
+https://api.dicebear.com/9.x/dylan/svg?seed=Chase&backgroundColor=619eff&mood=confused,happy,hopeful,neutral,superHappy
+https://api.dicebear.com/9.x/dylan/svg?seed=Eden&backgroundColor=ffa6e6&mood=superHappy
+https://api.dicebear.com/9.x/dylan/svg?seed=Eliza&backgroundColor=619eff&mood=hopeful
+https://api.dicebear.com/9.x/dylan/svg?seed=Caleb&backgroundColor=ffa6e6&hair=shaggy&mood=hopeful
+https://api.dicebear.com/9.x/dylan/svg?seed=Robert&mood=confused,happy,hopeful,neutral,superHappy
+https://api.dicebear.com/9.x/dylan/svg?seed=Ryan&mood=confused,happy,hopeful,neutral,superHappy
+```
+
+### Dark mode
+
+A toggle switch at the bottom of the Account Settings panel controls the color theme.
+
+- **Light** — default white/light-gray interface
+- **Dark** — dark surface colors with light text
+
+The preference is persisted to `localStorage` under the key `theme`. On initial load, if no saved preference exists, the app checks `window.matchMedia('(prefers-color-scheme: dark)')` and applies the system preference.
+
+The theme is applied by adding or removing the `dark` class on `document.documentElement`:
+
+```typescript
+useEffect(() => {
+    const root = document.documentElement;
+    if (isDark === 'dark') {
+        root.classList.add('dark');
+    } else {
+        root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', isDark);
+}, [isDark]);
+```
+
+## Danger zone
+
+<Warning>
+  Actions in this section are permanent and cannot be undone.
+</Warning>
+
+### Delete account and data
+
+Click **Delete account and data** to open a confirmation dialog. If you confirm:
+
+1. Your session is removed from `localStorage` (`user-login-finances` key is deleted).
+2. Your in-memory user state is set to `null`.
+3. You are returned to the login/create account page.
+
+This does not delete transactions or categories stored on the server — only the local session is cleared.

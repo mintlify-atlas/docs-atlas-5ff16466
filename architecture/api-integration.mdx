@@ -1,0 +1,326 @@
+---
+title: "API integration"
+description: "How the frontend communicates with the backend REST API"
+---
+
+All network calls are centralised in `src/api/transactions.ts`. Components and hooks never call `fetch` directly — they import the typed functions exported from this module.
+
+## Base URL
+
+The backend base URL is read from the `VITE_API_URL` environment variable at build time:
+
+```typescript src/api/transactions.ts
+const API_URL = import.meta.env.VITE_API_URL;
+```
+
+Create a `.env` file at the project root to configure it locally:
+
+```bash .env
+VITE_API_URL=http://localhost:3000
+```
+
+<Warning>
+  `VITE_API_URL` must be set before running `vite build`. Omitting it will cause every request to be sent to `undefined/api/…`, resulting in network errors.
+</Warning>
+
+## Filters type
+
+Several API functions accept an optional `filters` argument. The shape is defined in `src/types/types.tsx`:
+
+```typescript src/types/types.tsx
+export type Filters = {
+  type?: string;
+  category?: string;
+  year?: string;
+  month?: string;
+}
+
+export type FilterKey = keyof Filters
+```
+
+Filters are converted to query string parameters via the native `URLSearchParams` constructor:
+
+```typescript
+const params = new URLSearchParams(filters);
+const res = await fetch(`${API_URL}/api/transactions?${params}`);
+```
+
+## API functions
+
+### Transaction endpoints
+
+<Accordion title="getTransactions">
+
+```typescript src/api/transactions.ts
+export async function getTransactions(filters = {}): Promise<Transaction[]> {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(`${API_URL}/api/transactions?${params}`);
+  if (!res.ok) throw new Error(`Error loading transactions: ${res.status}`);
+  return res.json();
+}
+```
+
+Fetches the full list of transactions, optionally filtered by `type`, `category`, `year`, and/or `month`.
+
+</Accordion>
+
+<Accordion title="createTransaction">
+
+```typescript src/api/transactions.ts
+export async function createTransaction(
+  newItem: Transaction,
+): Promise<Transaction> {
+  const response = await fetch(`${API_URL}/api/transactions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newItem),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error adding transaction (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+```
+
+</Accordion>
+
+<Accordion title="updateTransaction">
+
+```typescript src/api/transactions.ts
+export async function updateTransaction(
+  item: Transaction,
+): Promise<Transaction> {
+  const response = await fetch(`${API_URL}/api/transactions/${item.id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(item),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error editing transaction (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+```
+
+</Accordion>
+
+<Accordion title="deleteTransaction">
+
+```typescript src/api/transactions.ts
+export async function deleteTransaction(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/transactions/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error delete transition (${response.status})`,
+    );
+  }
+}
+```
+
+</Accordion>
+
+### Category endpoints
+
+<Accordion title="getCategories">
+
+```typescript src/api/transactions.ts
+export async function getCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_URL}/api/categories`);
+  if (!res.ok) throw new Error(`Error fetching categories ${res.status}`);
+  return res.json();
+}
+```
+
+Fetches the flat list of all categories. Takes no filters.
+
+</Accordion>
+
+<Accordion title="createCategory">
+
+```typescript src/api/transactions.ts
+export async function createCategory(newItem: Category): Promise<Category> {
+  const response = await fetch(`${API_URL}/api/categories`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newItem),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error adding category (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+```
+
+</Accordion>
+
+<Accordion title="updateCategory">
+
+```typescript src/api/transactions.ts
+export async function updateCategory(item: Category): Promise<Category> {
+  const response = await fetch(`${API_URL}/api/categories/${item.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(item),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error editing category (${response.status})`,
+    );
+  }
+
+  return response.json();
+}
+```
+
+</Accordion>
+
+<Accordion title="deleteCategory">
+
+```typescript src/api/transactions.ts
+export async function deleteCategory(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/categories/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data.message ?? `Error deleting category (${response.status})`,
+    );
+  }
+}
+```
+
+</Accordion>
+
+### Statistics endpoints
+
+<Accordion title="getBalance">
+
+```typescript src/api/transactions.ts
+export async function getBalance(filters = {}): Promise<Balance> {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(`${API_URL}/api/stats/monthly?${params}`);
+  if (!res.ok) throw new Error(`"Error loading balance ${res.status}`);
+  return res.json();
+}
+```
+
+Returns monthly income, expense, and net balance figures along with period-over-period change percentages.
+
+</Accordion>
+
+<Accordion title="getYears">
+
+```typescript src/api/transactions.ts
+export async function getYears(): Promise<number[]> {
+  const res = await fetch(`${API_URL}/api/transactions/years`);
+  if (!res.ok) throw new Error(`Error fetching years ${res.status}`);
+  return res.json();
+}
+```
+
+Returns the list of years for which transactions exist. Used to populate year-filter dropdowns.
+
+</Accordion>
+
+<Accordion title="getTopCategories">
+
+```typescript src/api/transactions.ts
+export async function getTopCategories(filters = {}): Promise<DataOptions[]> {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(`${API_URL}/api/stats/top-categories?${params}`);
+  if (!res.ok) throw new Error(`Error fetching categories ${res.status}`);
+  return res.json();
+}
+```
+
+Returns the top 5 spending categories as `{ name, value }` pairs for the pie chart.
+
+</Accordion>
+
+<Accordion title="getAllCategories">
+
+```typescript src/api/transactions.ts
+export async function getAllCategories(filters = {}): Promise<DataOptions[]> {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(`${API_URL}/api/stats/by-category?${params}`);
+  if (!res.ok) throw new Error(`Error fetching categories ${res.status}`);
+  return res.json();
+}
+```
+
+Returns spending totals grouped by every category as `{ name, value }` pairs for the bar chart.
+
+</Accordion>
+
+## Function reference
+
+| Function | Method | Endpoint | Returns |
+|---|---|---|---|
+| `getTransactions(filters?)` | GET | `/api/transactions` | `Promise<Transaction[]>` |
+| `createTransaction(newItem)` | POST | `/api/transactions` | `Promise<Transaction>` |
+| `updateTransaction(item)` | PATCH | `/api/transactions/:id` | `Promise<Transaction>` |
+| `deleteTransaction(id)` | DELETE | `/api/transactions/:id` | `Promise<void>` |
+| `getCategories()` | GET | `/api/categories` | `Promise<Category[]>` |
+| `createCategory(newItem)` | POST | `/api/categories` | `Promise<Category>` |
+| `updateCategory(item)` | PUT | `/api/categories/:id` | `Promise<Category>` |
+| `deleteCategory(id)` | DELETE | `/api/categories/:id` | `Promise<void>` |
+| `getBalance(filters?)` | GET | `/api/stats/monthly` | `Promise<Balance>` |
+| `getYears()` | GET | `/api/transactions/years` | `Promise<number[]>` |
+| `getTopCategories(filters?)` | GET | `/api/stats/top-categories` | `Promise<DataOptions[]>` |
+| `getAllCategories(filters?)` | GET | `/api/stats/by-category` | `Promise<DataOptions[]>` |
+
+## Error handling
+
+Read-only GET requests throw a plain `Error` with the HTTP status code embedded in the message:
+
+```typescript
+if (!res.ok) throw new Error(`Error loading transactions: ${res.status}`);
+```
+
+Mutating requests (POST / PATCH / PUT / DELETE) attempt to parse the response body first so that server-supplied validation messages are surfaced to the UI:
+
+```typescript
+if (!response.ok) {
+  const data = await response.json().catch(() => ({}));
+  throw new Error(
+    data.message ?? `Error adding transaction (${response.status})`,
+  );
+}
+```
+
+The `.catch(() => ({}))` guard ensures the error path does not throw a second exception if the body is not valid JSON.
+
+<Tip>
+  Callers (context providers and hooks) catch these errors and store the message in their `error: string | null` state, which the UI can display to the user.
+</Tip>

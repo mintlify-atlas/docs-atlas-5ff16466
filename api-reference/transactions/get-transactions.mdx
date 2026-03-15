@@ -1,0 +1,131 @@
+---
+title: 'List transactions'
+description: 'Retrieve a list of transactions, optionally filtered by type, category, year, and month.'
+---
+
+## GET /api/transactions
+
+Returns an array of transactions. Use query parameters to filter results by type, category, year, or month. All filters are optional and can be combined.
+
+<Note>
+  The frontend uses `getTransactions(filters)` from `src/api/transactions.ts`, passing a `Filters` object that is serialized to `URLSearchParams` before being appended to the request URL.
+</Note>
+
+## Query parameters
+
+<ParamField query="type" type="string">
+  Filter by transaction type. Accepted values: `income` or `expense`.
+</ParamField>
+
+<ParamField query="category" type="string">
+  Filter by category name or identifier.
+</ParamField>
+
+<ParamField query="year" type="string">
+  Filter by four-digit year, e.g. `2024`.
+</ParamField>
+
+<ParamField query="month" type="string">
+  Filter by two-digit month number, e.g. `01` for January.
+</ParamField>
+
+## Response
+
+Returns an array of `Transaction` objects.
+
+<ResponseField name="[]" type="Transaction[]">
+  <Expandable title="Transaction properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the transaction.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Transaction type. One of `income` or `expense`.
+    </ResponseField>
+    <ResponseField name="category" type="string" required>
+      Category label for the transaction.
+    </ResponseField>
+    <ResponseField name="description" type="string" required>
+      Human-readable description of the transaction.
+    </ResponseField>
+    <ResponseField name="date" type="string" required>
+      Date of the transaction in `YYYY-MM-DD` format.
+    </ResponseField>
+    <ResponseField name="amount" type="number" required>
+      Transaction amount as a positive number.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code examples
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.example.com/api/transactions \
+  --data-urlencode "type=expense" \
+  --data-urlencode "year=2024" \
+  --data-urlencode "month=03"
+```
+
+```typescript TypeScript
+import { getTransactions } from './src/api/transactions';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+export async function getTransactions(filters = {}): Promise<Transaction[]> {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(`${API_URL}/api/transactions?${params}`);
+  if (!res.ok) throw new Error(`Error loading transactions: ${res.status}`);
+  return res.json();
+}
+
+// Usage with filters
+const transactions = await getTransactions({
+  type: 'expense',
+  year: '2024',
+  month: '03',
+});
+```
+
+</CodeGroup>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": "txn_abc123",
+    "type": "expense",
+    "category": "Food",
+    "description": "Grocery shopping",
+    "date": "2024-03-15",
+    "amount": 87.50
+  },
+  {
+    "id": "txn_def456",
+    "type": "income",
+    "category": "Salary",
+    "description": "Monthly salary",
+    "date": "2024-03-01",
+    "amount": 3500.00
+  }
+]
+```
+
+</ResponseExample>
+
+## Get available years
+
+A companion endpoint returns the distinct years for which transactions exist. This is used by the frontend to populate the year filter dropdown.
+
+**`GET /api/transactions/years`**
+
+Returns a `number[]` array of years, e.g. `[2022, 2023, 2024]`.
+
+```typescript TypeScript
+export async function getYears(): Promise<number[]> {
+  const res = await fetch(`${API_URL}/api/transactions/years`);
+  if (!res.ok) throw new Error(`Error fetching years ${res.status}`);
+  return res.json();
+}
+```

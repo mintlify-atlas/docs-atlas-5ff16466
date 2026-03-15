@@ -1,0 +1,133 @@
+---
+title: "Architecture overview"
+description: "How the application is structured"
+---
+
+Personal Finance Web is a single-page application (SPA) built with React. The frontend communicates with a separate REST API backend over HTTP. There is no server-side rendering — all routing and rendering happens in the browser.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Build tool | Vite 7 |
+| UI framework | React 19 |
+| Language | TypeScript 5.9 (strict) |
+| Routing | React Router DOM 7 |
+| Styling | Tailwind CSS 4 |
+| Charts | Apache ECharts + echarts-for-react |
+
+## Source directory layout
+
+```
+src/
+├── api/          # Fetch wrappers for every backend endpoint
+├── components/   # Shared UI components (Aside, Footer, ProtectedRoute, …)
+├── context/      # React Context providers (Settings, Dashboard, Transactions)
+├── hooks/        # Custom hooks (useTransactionsFetch, useTransactionsForm, usePagination)
+├── pages/        # Route-level page components (lazy loaded)
+├── types/        # Shared TypeScript type definitions
+└── utils/        # Pure helper functions (formatCurrency, getPagination, optionsCharts)
+```
+
+## Entry point
+
+`src/main.tsx` mounts the React tree into `#root`. The outermost providers are applied here:
+
+```typescript src/main.tsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { BrowserRouter } from 'react-router-dom'
+import { SettingsContextProvider } from "./context/SettingsContext.tsx"
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
+      <SettingsContextProvider>
+        <App />
+      </SettingsContextProvider>
+    </BrowserRouter>
+  </StrictMode>,
+)
+```
+
+## Lazy loading
+
+Every page component is code-split with `React.lazy` and wrapped in a single `<Suspense>` boundary that renders `<LoadingFallback />` while the chunk is in flight. This keeps the initial bundle small and defers page code until it is actually navigated to.
+
+```typescript src/App.tsx
+const Dashboard    = lazy(() => import("./pages/Dashboard"))
+const Transactions = lazy(() => import("./pages/Transactions"))
+const Categories   = lazy(() => import("./pages/Categories"))
+const Settings     = lazy(() => import("./pages/Settings"))
+const Login        = lazy(() => import("./pages/Login"))
+const NotFound     = lazy(() => import("./pages/NotFound"))
+```
+
+## Routing
+
+All protected routes are grouped under a single `<ProtectedRoute>` parent. The Login page and the 404 catch-all sit outside that group.
+
+| Path | Component | Protected |
+|---|---|---|
+| `/login` | `Login` | No |
+| `/` | `Dashboard` | Yes |
+| `/transactions` | `Transactions` | Yes |
+| `/categories` | `Categories` | Yes |
+| `/settings` | `Settings` | Yes |
+| `*` | `NotFound` | No |
+
+```typescript src/App.tsx
+<Suspense fallback={<LoadingFallback />}>
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route element={<ProtectedRoute />}>
+      <Route path="/" element={
+        <DashboardContextProvider>
+          <Dashboard />
+        </DashboardContextProvider>} />
+      <Route path="/categories" element={<Categories />} />
+      <Route path="/transactions" element={
+        <TransactionsContextProvider>
+          <Transactions />
+        </TransactionsContextProvider>} />
+      <Route path="/settings" element={<Settings />} />
+    </Route>
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+</Suspense>
+```
+
+### ProtectedRoute
+
+`ProtectedRoute` reads the current session from `SettingsContext`. If `user` is `null` the component redirects to `/login`; otherwise it renders the nested `<Outlet>`.
+
+```typescript src/components/ProtectedRoute.tsx
+import { Navigate, Outlet } from "react-router-dom";
+import { useSettings } from "../context/SettingsContext"
+
+export default function ProtectedRoute() {
+  const { user } = useSettings()
+
+  if (!user) {
+    return <Navigate to={"/login"} replace></Navigate>
+  }
+
+  return <Outlet />;
+}
+```
+
+<Note>
+  The sidebar (`<Aside />`) is rendered in `App` only when `user` is non-null, so it automatically disappears on the login screen.
+</Note>
+
+## Context nesting
+
+Context providers are scoped to the routes that need them rather than placed at the application root:
+
+- `SettingsContextProvider` — wraps the entire app (in `main.tsx`)
+- `DashboardContextProvider` — wraps the `/` route only
+- `TransactionsContextProvider` — wraps the `/transactions` route only
+
+This means dashboard data is fetched only when the user navigates to `/`, and transaction data is fetched only when the user navigates to `/transactions`.

@@ -1,0 +1,68 @@
+---
+title: 'Update category'
+description: 'Update the name of an existing category by its ID.'
+---
+
+Replaces an existing category with the provided data. The `id` field must be included in the request body to identify which category to update.
+
+<Note>
+  This endpoint uses `PUT`, which replaces the entire category resource. Provide all fields in the request body.
+</Note>
+
+## Endpoint
+
+```
+PUT /api/categories/:id
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the category to update.
+</ParamField>
+
+## Request body
+
+<ParamField body="name" type="string" required>
+  The new display name for the category.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string" required>
+  Unique identifier of the updated category.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Updated display name of the category.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request PUT \
+  --url "${VITE_API_URL}/api/categories/3" \
+  --header "Content-Type: application/json" \
+  --data '{ "id": "3", "name": "Bills" }'
+```
+
+```typescript TypeScript
+import { updateCategory } from './src/api/transactions';
+
+const updated = await updateCategory({ id: '3', name: 'Bills' });
+console.log(updated);
+// { id: "3", name: "Bills" }
+```
+
+</CodeGroup>
+
+## Response example
+
+```json 200
+{
+  "id": "3",
+  "name": "Bills"
+}
+```

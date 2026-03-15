@@ -1,0 +1,99 @@
+---
+title: 'Categories'
+description: 'Organizing transactions with custom spending categories.'
+keywords: ['categories', 'create', 'edit', 'delete', 'organize']
+---
+
+Categories let you group transactions by type of spending or income. Every transaction must be assigned a category, and all categories are user-defined.
+
+## Category type
+
+Each category conforms to the following TypeScript type:
+
+```typescript
+export type Category = {
+    id?: string
+    name: string
+}
+```
+
+| Field | Type | Notes |
+| ----- | ---- | ----- |
+| `id` | `string` (optional) | Assigned by the backend. Absent on new records. |
+| `name` | `string` | Display name. Cannot be empty. |
+
+## Creating a category
+
+Click the **+ New Category** button in the top-right corner to open the creation modal.
+
+<Steps>
+  <Step title="Open the modal">
+    Click **+ New Category**. An empty form with a single **Name** field appears.
+  </Step>
+  <Step title="Enter a name">
+    Type a name for the new category. The name cannot be blank.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The categories table reloads automatically to include the new entry.
+  </Step>
+</Steps>
+
+<Note>
+  The modal can be closed at any time by pressing `Escape` or clicking the backdrop.
+</Note>
+
+## Managing categories
+
+All existing categories are listed in a table with two columns: **Category Name** and **Actions**.
+
+<Tabs>
+  <Tab title="Edit">
+    Click the **Edit** button on any row to open the edit modal pre-filled with the category's current name. Update the name and click **Save**.
+  </Tab>
+  <Tab title="Delete">
+    Click the **Delete** button on any row to open a confirmation dialog. Confirm to permanently remove the category.
+
+    <Warning>
+      Deleting a category does not automatically re-assign transactions that use it. Verify existing transactions before removing a category.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Empty state
+
+When no categories have been created yet, the table displays:
+
+> **No categories yet** — Start by creating your first category to organize your transactions.
+
+## Integration with transactions
+
+Categories created here appear as options in two places:
+
+- The **Category** dropdown in the transaction creation and edit modal.
+- The **Category** filter on the Transactions page.
+
+<Info>
+  The default category for new transactions is `"Food"`. If you delete the `Food` category, new transactions will still reference it by name until you edit them.
+</Info>
+
+## Example categories
+
+The following are common categories to get started:
+
+<AccordionGroup>
+  <Accordion title="Spending categories">
+    - Food
+    - Transport
+    - Housing
+    - Health
+    - Entertainment
+    - Clothing
+    - Education
+  </Accordion>
+  <Accordion title="Income categories">
+    - Salary
+    - Freelance
+    - Investments
+    - Rental income
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,72 @@
+---
+title: Introduction
+description: A React-based personal finance dashboard for tracking income, expenses, and categories with interactive charts and dark mode support.
+---
+
+## What is Personal Finance Web?
+
+Personal Finance Web is a full-featured personal finance management application built with React, TypeScript, and Tailwind CSS. It connects to a REST API backend and gives you a clear picture of your financial health through an interactive dashboard, detailed transaction logs, and customizable spending categories.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/getting-started/quickstart">
+    Get the app running locally in minutes
+  </Card>
+  <Card title="Configuration" icon="gear" href="/getting-started/configuration">
+    Set up your environment and API connection
+  </Card>
+  <Card title="Dashboard" icon="chart-line" href="/features/dashboard">
+    Understand your income and expense overview
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/transactions/get-transactions">
+    Explore the full backend API surface
+  </Card>
+</CardGroup>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Financial dashboard" icon="gauge">
+    At-a-glance income, expense, and balance summary cards with month-over-month change indicators.
+  </Card>
+  <Card title="Interactive charts" icon="chart-pie">
+    Bar, pie, and donut charts powered by Apache ECharts showing spending by category and over time.
+  </Card>
+  <Card title="Transaction management" icon="list-check">
+    Create, edit, and delete transactions with type, category, description, date, and amount fields.
+  </Card>
+  <Card title="Category management" icon="tags">
+    Organize spending with custom categories that can be created, renamed, and deleted.
+  </Card>
+  <Card title="Advanced filtering" icon="filter">
+    Filter any view by year, month, transaction type, and category simultaneously.
+  </Card>
+  <Card title="Dark mode" icon="moon">
+    Full dark mode support with preference saved to localStorage and system preference detection.
+  </Card>
+  <Card title="User profiles" icon="user">
+    Personalize with a display name and choose from pre-built avatar options.
+  </Card>
+  <Card title="Responsive design" icon="mobile">
+    Optimized layouts for mobile, tablet, and desktop with adaptive chart heights.
+  </Card>
+</CardGroup>
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript |
+| Routing | React Router v7 |
+| Styling | Tailwind CSS v4 |
+| Charts | Apache ECharts via echarts-for-react |
+| Build tool | Vite |
+| HTTP | Native Fetch API |
+| Currency | Brazilian Real (BRL) via `Intl.NumberFormat` |
+
+## Architecture overview
+
+The frontend is a single-page application that communicates with a separate REST API backend. All state is managed through React Context providers, with lazy-loaded page components for optimal performance.
+
+<Info>
+  The backend API URL is configured via the `VITE_API_URL` environment variable. You must have the backend running before using most features.
+</Info>

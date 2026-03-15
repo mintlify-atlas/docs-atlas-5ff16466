@@ -1,0 +1,50 @@
+---
+title: 'Delete category'
+description: 'Permanently delete a category by its ID.'
+---
+
+Deletes the specified category. This action is irreversible.
+
+<Warning>
+  Deleting a category does not automatically reassign transactions that reference it. Review your transactions before deleting a category.
+</Warning>
+
+## Endpoint
+
+```
+DELETE /api/categories/:id
+```
+
+## Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the category to delete.
+</ParamField>
+
+## Response
+
+Returns `204 No Content` on success. No response body is returned.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request DELETE \
+  --url "${VITE_API_URL}/api/categories/3"
+```
+
+```typescript TypeScript
+import { deleteCategory } from './src/api/transactions';
+
+await deleteCategory('3');
+// Resolves with no return value on success
+```
+
+</CodeGroup>
+
+## Response example
+
+```
+204 No Content
+```

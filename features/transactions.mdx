@@ -1,0 +1,113 @@
+---
+title: 'Transactions'
+description: 'Managing your income and expense records.'
+keywords: ['transactions', 'income', 'expense', 'filter', 'create', 'edit', 'delete']
+---
+
+The Transactions page lets you view, create, edit, and delete all financial records. Filters and pagination help you navigate large transaction histories.
+
+## Transaction type
+
+Every transaction conforms to the following TypeScript type:
+
+```typescript
+export type Transaction = {
+    id?: string
+    type: "income" | "expense"
+    category: string
+    description: string
+    date: string
+    amount: number
+}
+```
+
+| Field | Type | Notes |
+| ----- | ---- | ----- |
+| `id` | `string` (optional) | Assigned by the backend. Absent on new records. |
+| `type` | `"income" \| "expense"` | Determines whether the amount adds to or subtracts from the balance. |
+| `category` | `string` | Must match an existing category name. Defaults to `"Food"` on new transactions. |
+| `description` | `string` | Free-text label for the transaction. |
+| `date` | `string` | ISO date string in `YYYY-MM-DD` format. Defaults to today's local date. |
+| `amount` | `number` | Positive value in BRL. Must be greater than 0. |
+
+## Creating a transaction
+
+Click the **+ New Transaction** button in the top-right corner to open the creation modal.
+
+<Steps>
+  <Step title="Open the modal">
+    Click **+ New Transaction**. The form resets to the default values: type `expense`, category `Food`, today's date, and an empty description.
+  </Step>
+  <Step title="Fill in the form">
+    Complete all fields in the modal:
+
+    - **Description** — a short label for the transaction (required, cannot be empty)
+    - **Amount** — a positive number in BRL, entered as a decimal (e.g., `42.50`)
+    - **Type** — select `Expense` or `Income`
+    - **Category** — select from your existing categories
+    - **Date** — defaults to today; change using the date picker
+  </Step>
+  <Step title="Save">
+    Click **Save**. The transaction list reloads automatically. If validation fails, an inline warning appears describing the issue.
+  </Step>
+</Steps>
+
+<Note>
+  The modal can also be closed by pressing `Escape` or clicking the backdrop.
+</Note>
+
+### Form validation
+
+The modal validates the form before submitting:
+
+- Description cannot be blank.
+- Amount must be greater than `0`.
+
+Validation errors are shown inline above the Save button.
+
+## Editing and deleting
+
+<Tabs>
+  <Tab title="Edit">
+    Each row in the transactions table has an **Edit** action. Clicking it opens the same modal pre-filled with the transaction's current values. Make your changes and click **Save** to update the record.
+  </Tab>
+  <Tab title="Delete">
+    Each row also has a **Delete** action. Clicking it opens a confirmation dialog showing the transaction's description. Confirm to permanently remove the record. This action cannot be undone.
+  </Tab>
+</Tabs>
+
+## Filters
+
+A filter panel appears above the table with five controls:
+
+| Filter | Options | Default |
+| ------ | ------- | ------- |
+| Year | All years with recorded data, or "All years" | — |
+| Month | January – December, or "All months" | — |
+| Category | All existing category names, or "All Categories" | — |
+| Type | Income, Expense, or "All types" | — |
+| Reset filters | Button | Clears all four filters |
+
+Filters are synced to URL search params via `useSearchParams`, so the current view can be bookmarked or shared.
+
+<Tip>
+  Use the **Reset filters** button to quickly return to an unfiltered view of all transactions.
+</Tip>
+
+## Transactions table
+
+Filtered results are displayed in a paginated table with the following columns:
+
+| Column | Description |
+| ------ | ----------- |
+| Date | The transaction date in `YYYY-MM-DD` format |
+| Description | The transaction label |
+| Category | The assigned category name |
+| Amount | The amount formatted in BRL (e.g., `R$ 42,50`) |
+| Actions | Edit and Delete buttons |
+
+When no transactions match the active filters, an empty state is shown with a **Clear Filters** button.
+
+## Pagination
+
+Results are split across pages. Navigation controls appear below the table when the total number of transactions exceeds the page size.

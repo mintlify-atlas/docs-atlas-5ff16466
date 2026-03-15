@@ -1,0 +1,125 @@
+---
+title: "Quickstart"
+description: "Get the Personal Finance Web app running locally in minutes."
+---
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Node.js** v18 or later
+- **npm**, **yarn**, or **pnpm**
+- A running instance of the backend API (see the note below)
+
+<Note>
+  Personal Finance Web is a frontend-only application. It requires a separate backend REST API to function. Make sure your backend server is running and accessible before starting the app.
+</Note>
+
+## Get up and running
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the project from GitHub to your local machine.
+
+    ```bash
+    git clone https://github.com/wilker31vivas/personal-finance-web.git
+    cd personal-finance-web
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required packages using your preferred package manager.
+
+    <CodeGroup>
+
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Set up environment variables">
+    Create a `.env` file in the project root and set the URL of your backend API.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    If there is no `.env.example`, create the file manually:
+
+    ```bash
+    touch .env
+    ```
+
+    Then add the following variable:
+
+    ```bash .env
+    VITE_API_URL=http://localhost:3000
+    ```
+
+    The `VITE_API_URL` variable is used throughout the application to build API request URLs. For example, in `src/api/transactions.ts`:
+
+    ```typescript
+    const API_URL = import.meta.env.VITE_API_URL;
+    ```
+
+    All API calls — for transactions, categories, and statistics — are prefixed with this base URL.
+  </Step>
+
+  <Step title="Start the development server">
+    Run the dev server. Vite will start with the `--host` flag, making the app accessible on your local network.
+
+    ```bash
+    npm run dev
+    ```
+
+    The app will be available at `http://localhost:5173` by default.
+  </Step>
+</Steps>
+
+## Available scripts
+
+The following scripts are defined in `package.json`:
+
+| Script | Command | Description |
+|---|---|---|
+| `dev` | `vite --host` | Start the development server, accessible on the local network |
+| `build` | `tsc -b && vite build` | Type-check and compile a production build to `dist/` |
+| `preview` | `vite preview` | Serve the production build locally for testing |
+| `lint` | `eslint .` | Run ESLint across the entire codebase |
+
+### Build for production
+
+```bash
+npm run build
+```
+
+This runs `tsc -b` to type-check the project, then `vite build` to produce an optimized bundle in the `dist/` directory.
+
+### Preview the production build
+
+```bash
+npm run preview
+```
+
+Serves the contents of `dist/` locally so you can verify the production build before deploying.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/getting-started/configuration">
+    Learn about environment variables and build settings.
+  </Card>
+  <Card title="Dashboard" icon="chart-line" href="/features/dashboard">
+    Explore the financial dashboard and its features.
+  </Card>
+</CardGroup>

@@ -1,0 +1,161 @@
+---
+title: "Configuration"
+description: "Configure environment variables, build settings, and TypeScript options for Personal Finance Web."
+---
+
+## Environment variables
+
+Personal Finance Web uses a single environment variable to connect to the backend API.
+
+### `VITE_API_URL`
+
+The base URL of your backend REST API. All API calls are prefixed with this value.
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_URL` | Yes | Base URL of the backend API, e.g. `http://localhost:3000` |
+
+Create a `.env` file in the project root:
+
+```bash .env
+VITE_API_URL=http://localhost:3000
+```
+
+The variable is read in `src/api/transactions.ts` and used to construct every API endpoint:
+
+```typescript src/api/transactions.ts
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Example usage
+const res = await fetch(`${API_URL}/api/transactions?${params}`);
+```
+
+<Warning>
+  Never commit your `.env` file to version control. It is already listed in `.gitignore`, but double-check before pushing to a public repository. Environment files may contain sensitive API URLs or credentials.
+</Warning>
+
+<Tip>
+  Use separate `.env` files for different environments. Vite supports `.env.development` for local dev and `.env.production` for production builds. Set `VITE_API_URL` to your deployed backend URL in `.env.production`.
+</Tip>
+
+### Environment file precedence
+
+Vite loads environment files in the following order (later files take priority):
+
+1. `.env`
+2. `.env.local`
+3. `.env.[mode]` (e.g. `.env.development`, `.env.production`)
+4. `.env.[mode].local`
+
+All of these are listed in `.gitignore` and should never be committed.
+
+## Vite configuration
+
+The Vite config is defined in `vite.config.ts`:
+
+```typescript vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+})
+```
+
+Two Vite plugins are in use:
+
+| Plugin | Package | Purpose |
+|---|---|---|
+| `react()` | `@vitejs/plugin-react` | Enables React Fast Refresh and JSX transform |
+| `tailwindcss()` | `@tailwindcss/vite` | Integrates Tailwind CSS v4 via the Vite plugin (no PostCSS config required) |
+
+### `--host` flag
+
+The `dev` script in `package.json` passes the `--host` flag to Vite:
+
+```json package.json
+"dev": "vite --host"
+```
+
+This exposes the dev server on all network interfaces (not just `localhost`), making the app accessible from other devices on the same network — useful for testing on mobile.
+
+## TypeScript configuration
+
+The project uses a composite TypeScript setup with three config files.
+
+### `tsconfig.json`
+
+The root config acts as a project reference aggregator. It delegates to the two child configs and sets a shared `baseUrl`:
+
+```json tsconfig.json
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": "."
+  }
+}
+```
+
+### `tsconfig.app.json`
+
+Covers all source files under `src/`. Key settings:
+
+```json tsconfig.app.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}
+```
+
+Notable options:
+
+| Option | Value | Effect |
+|---|---|---|
+| `target` | `ES2022` | Output modern JavaScript |
+| `moduleResolution` | `bundler` | Optimized for Vite bundler resolution |
+| `jsx` | `react-jsx` | Uses the React 17+ automatic JSX transform |
+| `paths` | `@/*` → `./src/*` | Enables `@/` import alias for `src/` |
+| `strict` | `true` | Enables all strict type checks |
+| `noEmit` | `true` | Type-check only; Vite handles transpilation |
+
+## Tailwind CSS v4
+
+This project uses **Tailwind CSS v4**, which integrates directly as a Vite plugin — no `tailwind.config.js` or PostCSS configuration is needed.
+
+The plugin is registered in `vite.config.ts`:
+
+```typescript vite.config.ts
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+})
+```
+
+Tailwind styles are imported in `src/index.css` and loaded via `src/main.tsx`.
+
+## Available npm scripts
+
+| Script | Command | Description |
+|---|---|---|
+| `dev` | `vite --host` | Start the dev server, exposed on the local network |
+| `build` | `tsc -b && vite build` | Type-check then compile a production bundle to `dist/` |
+| `preview` | `vite preview` | Serve the `dist/` build locally |
+| `lint` | `eslint .` | Lint the entire codebase with ESLint |

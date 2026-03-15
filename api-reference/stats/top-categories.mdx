@@ -1,0 +1,73 @@
+---
+title: 'Top categories'
+description: 'Retrieve the top 5 spending categories by expense amount for a given month.'
+---
+
+Returns the five categories with the highest total expense for the specified period. This data is used to render the top-5 bar chart on the dashboard.
+
+## Endpoint
+
+```
+GET /api/stats/top-categories
+```
+
+## Query parameters
+
+<ParamField query="year" type="string" required>
+  Four-digit year to filter by (e.g. `"2024"`).
+</ParamField>
+
+<ParamField query="month" type="string" required>
+  Month number to filter by, without leading zero (e.g. `"3"` for March).
+</ParamField>
+
+## Response
+
+An array of up to 5 objects, sorted by `value` descending.
+
+<ResponseField name="name" type="string" required>
+  Category name (e.g. `"Food"`, `"Transport"`).
+</ResponseField>
+
+<ResponseField name="value" type="number" required>
+  Total amount spent in this category for the period.
+</ResponseField>
+
+<Tip>
+  The array contains at most 5 items. If fewer than 5 categories have expense transactions in the selected period, only those categories are returned.
+</Tip>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://your-api-url/api/stats/top-categories \
+  --data-urlencode "year=2024" \
+  --data-urlencode "month=3"
+```
+
+```typescript TypeScript
+import { getTopCategories } from './api/transactions';
+
+// From DashboardContext.tsx — called with the active filters
+const topCategories = await getTopCategories({ year: '2024', month: '3' });
+
+topCategories.forEach(({ name, value }) => {
+  console.log(`${name}: ${value}`);
+});
+```
+
+</CodeGroup>
+
+### Response example
+
+```json 200
+[
+  { "name": "Food", "value": 820 },
+  { "name": "Housing", "value": 1200 },
+  { "name": "Transport", "value": 340 },
+  { "name": "Health", "value": 290 },
+  { "name": "Entertainment", "value": 150 }
+]
+```
